@@ -1,0 +1,17 @@
+{
+    "basline-shanmukh": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "aflatoxin",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8245684559181307,
+            "RMSE": 46.99478265356271,
+            "MAE": 18.833099222096944
+        },
+        "sample_count": 98
+    }
+}
