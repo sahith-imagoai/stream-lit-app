@@ -32,7 +32,7 @@ To run the Experiment Tracking application, navigate to the `experiment-tracking
 cd experiment-tracking
 streamlit run main.py
 ```
-
+Link to the application - [Experiment Tracking App](https://experiment-tracking.streamlit.app/)
 ## Mycotoxin Analysis
 
 ### Usage
@@ -42,3 +42,4 @@ To run the Mycotoxin Analysis application, navigate to the mycotoxin-analysis di
 cd mycotoxin-analysis
 streamlit run main.py
 ```
+Link to the application - [Mycotoxin Analysis App](https://mycotoxin-analysis.streamlit.app/)
