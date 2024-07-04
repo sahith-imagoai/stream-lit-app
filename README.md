@@ -9,8 +9,8 @@ This repository contains two Streamlit applications:
 ## Installation
 1. Clone this repository:
     ```bash
-    git clone https://github.com/shweta-imagoai/streamlit-mycotoxin-satyam.git
-    cd mycotoxin-apps
+    git clone https://github.com/shweta-imagoai/streamlit-apps
+    cd mycotoxin-apps or cdd experiment-tracking
     ```
 
 2. Create a virtual environment and activate it:
@@ -20,6 +20,7 @@ This repository contains two Streamlit applications:
     ```
 
 3. Install the required packages:
+    - Python 3.8
     ```bash
     pip install -r requirements.txt
     ```
