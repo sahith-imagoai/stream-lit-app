@@ -385,7 +385,7 @@ if uploaded_files:
                 data_list = []
 
                 for exp_name in selected_experiments:
-                  
+                  print(exp_name)
                   filtered_data = filter_experiment_data(experiment_data[exp_name], 
                                                mycotoxin=selected_mycotoxin if selected_mycotoxin != 'All' else None,
                                                location=selected_location if selected_location != 'All' else None,
@@ -393,22 +393,25 @@ if uploaded_files:
                                                source=selected_source if selected_source != 'All' else None)
                   y_true = filtered_data['y_true']
                   y_pred = filtered_data['y_pred']
-
+                  
                   r2 = r2_score(y_true, y_pred)
                   mae = mean_absolute_error(y_true, y_pred)
                   rmse = mean_squared_error(y_true, y_pred, squared=False)
                   no_count = 0
-                  if(mycotoxins[0]=='AFLA'):
-                   filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
-                   yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
-                   no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
+                 
+                  filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+                  yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
+                  no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
+                  no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
+
     # Append the metrics to the list
                   data_list.append({
         "Experiment Name": exp_name,
         "R2": r2,
         "MAE": mae,
         "RMSE": rmse,
-        "Incorrect Predictions": no_count
+        "Incorrect Predictions": no_count,
+        "Incorrect Predictions at 0":no_count_0
     })
 
                 final_comparision_metrics = pd.DataFrame(data_list)
