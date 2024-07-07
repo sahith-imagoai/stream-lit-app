@@ -358,5 +358,5 @@ def main(data_file):
 
 # Run the main function
 if __name__ == "__main__":
-    data_file = "ground_corn_mycotoxin_icp.csv"
+    data_file = "/Users/sahith/Desktop/Imagoai-streamlit/mycotoxin-quant/mycotoxin-analysis/ground_corn_mycotoxin_icp.csv"
     main(data_file)

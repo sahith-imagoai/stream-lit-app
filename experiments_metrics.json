@@ -1,0 +1,182 @@
+{
+    "21": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8541322861048823,
+            "RMSE": 42.28386271473352,
+            "MAE": 15.506764705882354
+        },
+        "sample_count": 102
+    },
+    "1": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8541322861048823,
+            "RMSE": 42.28386271473352,
+            "MAE": 15.506764705882354
+        },
+        "sample_count": 102
+    },
+    "": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8541322861048823,
+            "RMSE": 42.28386271473352,
+            "MAE": 15.506764705882354
+        },
+        "sample_count": 102
+    },
+    "TRM-0-INCLUDED-CNN": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8874037332582819,
+            "RMSE": 37.564823400927324,
+            "MAE": 12.916285714285715
+        },
+        "sample_count": 105
+    },
+    "TRM-0-INCLUDED-XGB": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.9124665936509699,
+            "RMSE": 33.121215816193356,
+            "MAE": 8.572761904761904
+        },
+        "sample_count": 105
+    },
+    "TRM-0-WITHOUT-CNN": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8977837297983638,
+            "RMSE": 35.79145640273069,
+            "MAE": 11.140095238095238
+        },
+        "sample_count": 105
+    },
+    "TRM-0-WITHOUT-XGB": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.8946447890225464,
+            "RMSE": 36.33685755734606,
+            "MAE": 11.469714285714291
+        },
+        "sample_count": 105
+    },
+    "TEST": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.9241335253836213,
+            "RMSE": 30.835025199399773,
+            "MAE": 8.367047619047618
+        },
+        "sample_count": 105
+    },
+    "satyam-smaller-arc": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "DON",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.10598427405585786,
+            "RMSE": 5312.888546770219,
+            "MAE": 2311.2871739130433
+        },
+        "sample_count": 46
+    },
+    "smaller-arc-satyam": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "DON",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.10598427405585786,
+            "RMSE": 5312.888546770219,
+            "MAE": 2311.2871739130433
+        },
+        "sample_count": 46
+    },
+    "satyam-smaller-arc2": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "DON",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.10598427405585786,
+            "RMSE": 5312.888546770219,
+            "MAE": 2311.2871739130433
+        },
+        "sample_count": 46
+    },
+    "TRM-INCLUDED-0-CNN": {
+        "filters": {
+            "commodity": "Corn",
+            "source": "ALL",
+            "mycotoxin": "AFLA",
+            "location": "ALL",
+            "type": "ALL"
+        },
+        "metrics": {
+            "R2": 0.9241335253836213,
+            "RMSE": 30.835025199399773,
+            "MAE": 8.367047619047618
+        },
+        "sample_count": 105
+    }
+}

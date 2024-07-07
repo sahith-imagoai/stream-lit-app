@@ -44,7 +44,61 @@ def filter_data(data, source, mycotoxin, location, type,target_column='y_true'):
 
     return filtered_data, data_with_nan
 
+rsdmax_mapping = {
+    5: 25,
+    20: 20,
+    100: 16,
+    300: 16
+}
 
+def get_nearest_rsdmax(value):
+    nearest_rsdmax = min(rsdmax_mapping.keys(), key=lambda x: abs(x - value))
+    return rsdmax_mapping[nearest_rsdmax]
+def load_experiment_data(folder_path):
+    experiment_data = {}
+    files = os.listdir(folder_path)
+    for file in files:
+        if file.endswith(".csv"):
+            experiment_name = os.path.splitext(file)[0]
+            experiment_data[experiment_name] = pd.read_csv(os.path.join(folder_path, file))
+    return experiment_data
+def filter_experiment_data(data, mycotoxin=None, type=None, location=None, source=None):
+    filtered_data = data.copy()
+
+    if mycotoxin:
+        filtered_data = filtered_data[filtered_data['mycotoxin'] == mycotoxin]
+
+    if type:
+        filtered_data = filtered_data[filtered_data['type'] == type]
+
+    if location:
+        filtered_data = filtered_data[filtered_data['location'] == location]
+
+    if source:
+        filtered_data = filtered_data[filtered_data['source'] == source]
+
+    return filtered_data
+# Function to calculate acceptable range
+def calculate_acceptable_range(y_true):
+    rsdmax = get_nearest_rsdmax(y_true)
+    lower_bound = y_true - 0.02 * rsdmax * y_true
+    upper_bound = y_true + 0.02 * rsdmax * y_true
+    return lower_bound, upper_bound
+
+
+def is_y_pred_in_range(y_true, y_pred):
+    if y_true <= 10 and y_pred <= 10:
+        return 'Yes'
+    elif 10 < y_true <= 35 and 10 < y_pred <= 35:
+        return 'Yes'
+    elif 50 < y_true <= 100 and 50 < y_pred <= 100:
+        return 'Yes'
+    elif 200 < y_true <= 300 and 200 < y_pred <= 300:
+        return 'Yes'
+    elif y_true > 300 and y_pred > 250:
+        return 'Yes'
+    else:
+        return 'No'    
 def calculate_metrics(y_true, y_pred):
     r2 = r2_score(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
@@ -61,7 +115,19 @@ def is_experiment_name_unique(experiment_name, json_file_path):
                 return False
     return True
 
+def save_experiment_data(complete_data, experiment_name):
+    save_dir = "experiment_results"
+    os.makedirs(save_dir, exist_ok=True)  # Create directory if it doesn't exist
 
+    # Generate file paths for saving CSV files
+    complete_data_file = os.path.join(save_dir, f"{experiment_name}_complete_data.csv")
+
+    # Save complete data to CSV file
+    complete_data.to_csv(complete_data_file, index=False)
+    st.success(f"Complete data saved successfully to {complete_data_file}")
+
+   
+    
 def save_metrics_to_json(metrics, file_name, filters, experiment_name, sample_count):
     json_file = "experiments_metrics.json"
     
@@ -208,9 +274,9 @@ if uploaded_files:
             }
             if experiment_name != "":
                 json_file = save_metrics_to_json(metrics, file_name, filters, experiment_name, sample_count)
+                save_experiment_data(data, experiment_name)
 
-
-            tab1, tab2, tab3, tab4, tab5 = st.tabs(["Scatter Plot", "Residual Plot", "Metric Comparison", "NaN Data Visualization", "Experiment Comparison"])
+            tab1, tab2, tab3, tab4, tab5 ,tab6= st.tabs(["Scatter Plot", "Residual Plot", "Metric Comparison", "NaN Data Visualization", "Experiment Comparison","Data Visualization"])
 
             with tab1:
                 st.header("Scatter Plot: True vs Predicted")
@@ -281,160 +347,126 @@ if uploaded_files:
                 # Display the filtered NaN data
                 st.subheader("Filtered NaN Data")
                 st.dataframe(nan_filtered_data)
-            with tab5:
+            with tab5: 
+                st.title('Experiment Data Analysis')
+                folder_path = "experiment_results"
+                st.write("Only select the experiments with same mycotoxin value")
+                if not os.path.exists(folder_path):
+                  st.warning(f"No experiment data found in {folder_path}")
+                  st.stop()
+                experiment_data = load_experiment_data(folder_path)
+                experiment_names = list(experiment_data.keys())
+                selected_experiments = st.multiselect("Select Experiments for Comparison", experiment_names)
+                if not selected_experiments:
+                  st.info("Select one or more experiments to compare")
+                  st.stop()
+                
+
+        # Add a separator between experiments
+                st.markdown("---")
+
+                combined_data = pd.concat([experiment_data[exp_name] for exp_name in selected_experiments], ignore_index=True)
+
+                first_key = next(iter(experiment_data))
+                print(first_key)
+                print(set(combined_data['mycotoxin']))
+                if(len(set(combined_data['mycotoxin'])) > 1):
+                   st.warning("Warning: You have selected different mycotoxins at a time. Please verify.")
+                mycotoxins = sorted(set(combined_data['mycotoxin']))
+                locations = sorted(set(combined_data['location']))
+                types = sorted(set(combined_data['type']))
+                sources = sorted(set(combined_data['source']))
+
+                selected_mycotoxin = st.selectbox("Filter by Mycotoxin", ['All'] + mycotoxins)
+                selected_location = st.selectbox("Filter by Location", ['All'] + locations)
+                selected_type = st.selectbox("Filter by Type", ['All'] + types)
+                selected_source = st.selectbox("Filter by Source", ['All'] + sources)
+                filtered_experiment_data = {}
+                data_list = []
+
+                for exp_name in selected_experiments:
+                  
+                  filtered_data = filter_experiment_data(experiment_data[exp_name], 
+                                               mycotoxin=selected_mycotoxin if selected_mycotoxin != 'All' else None,
+                                               location=selected_location if selected_location != 'All' else None,
+                                               type=selected_type if selected_type != 'All' else None,
+                                               source=selected_source if selected_source != 'All' else None)
+                  y_true = filtered_data['y_true']
+                  y_pred = filtered_data['y_pred']
+
+                  r2 = r2_score(y_true, y_pred)
+                  mae = mean_absolute_error(y_true, y_pred)
+                  rmse = mean_squared_error(y_true, y_pred, squared=False)
+                  no_count = 0
+                  if(mycotoxins[0]=='AFLA'):
+                   filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+                   yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
+                   no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
+    # Append the metrics to the list
+                  data_list.append({
+        "Experiment Name": exp_name,
+        "R2": r2,
+        "MAE": mae,
+        "RMSE": rmse,
+        "Incorrect Predictions": no_count
+    })
+
+                final_comparision_metrics = pd.DataFrame(data_list)
+                st.write(final_comparision_metrics)
+                
                 st.header("Experiment Performance Comparison")
                 if os.path.exists(json_file_path):
+                   raw_data = load_json_data(json_file_path)
+                if raw_data:
+                   data = process_data(raw_data)
+           
+                            
+            with tab6:
+               st.header("Data Visualization")
 
-                    raw_data = load_json_data(json_file_path)
-                    if raw_data:
-                        data = process_data(raw_data)
-                        # Create a dropdown to select the commodity
-                        commodities = ['Corn', 'Barley', 'Wheat', 'CGM', 'DDGS']
-                        selected_commodity = st.selectbox("Select Commodity", commodities)
-                        
-                        if selected_commodity in data:
-                            commodity_data = data[selected_commodity]
-                            mycotoxins = list(commodity_data.keys())
-                            
-                            # all_sources = list(set(exp['filters']['source'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                            # Create filters for location, type, and mycotoxin
-                            all_locations = list(set(exp['filters']['location'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                            all_types = list(set(exp['filters']['type'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                            all_sources = ['ALL','TRM', 'TCS', 'Others']
+    # Define filter options
+               mycotoxin_options = list(filtered_data['mycotoxin'].unique())
+               source_options = list(filtered_data['source'].unique())
+               location_options = list(filtered_data['location'].unique())
+               type_options = list(filtered_data['type'].unique())
 
-                            selected_mycotoxin = st.selectbox("Filter by Mycotoxin", mycotoxins)
-                            selected_source = st.selectbox("Filter by Source", all_sources)
-                            selected_location = st.selectbox("Filter by Location", all_locations)
-                            selected_type = st.selectbox("Filter by Type", all_types)
+    # Allow selection of mycotoxin type, source, location, and type
+               selected_mycotoxin = st.selectbox('Select Mycotoxin Type', ['All'] + mycotoxin_options)
+               selected_source = st.selectbox('Select Source', ['All'] + source_options)
+               selected_location = st.selectbox('Select Location', ['All'] + location_options)
+               selected_type = st.selectbox('Select Type', ['All'] + type_options)
 
-                            # Filter data based on selected location, type, and mycotoxin
-                            filtered_commodity_data = {}
-                            for mycotoxin, experiments in commodity_data.items():
-                                if selected_mycotoxin == "ALL" or mycotoxin == selected_mycotoxin:
-                                    if selected_source == "ALL":
-                                        source_filtered_experiments = experiments
-                                    else:
-                                        source_filtered_experiments = [exp for exp in experiments if exp['filters']['source'] == selected_source]
-                                    
-                                    if not source_filtered_experiments:
-                                        continue  # Skip to next mycotoxin if no data available after source filtering
-                
-                                    
-                                    filtered_experiments = [
-                                        exp for exp in source_filtered_experiments
-                                        if (selected_location == "ALL" or exp['filters']['location'] == selected_location) and
-                                        (selected_type == "ALL" or exp['filters']['type'] == selected_type)
-                                    ]
-                                    
-                                    if filtered_experiments:
-                                        filtered_commodity_data[mycotoxin] = filtered_experiments
-                            if not filtered_commodity_data:
-                                st.info("No performance data available")
-                                st.stop()
-                            # Display max_data in a matrix format
-                            max_data = {}
-                            for mycotoxin, experiments in filtered_commodity_data.items():
-                                if experiments:  # Ensure there are experiments for this mycotoxin
-                                    max_data[mycotoxin] = {
-                                        'R2': max(exp['metrics']['R2'] for exp in experiments),
-                                        'RMSE': min(exp['metrics']['RMSE'] for exp in experiments),
-                                        'MAE': min(exp['metrics']['MAE'] for exp in experiments)
-                                    }
-                                else:
-                                    max_data[mycotoxin] = {
-                                    'R2': None,
-                                    'RMSE': None,
-                                    'MAE': None
-                                    }
+    # Filter data based on selected filters
+               filtered_data = filtered_data.copy()
+               if selected_mycotoxin != 'All':
+                filtered_data = filtered_data[filtered_data['mycotoxin'] == selected_mycotoxin]
+               if selected_source != 'All':
+                filtered_data = filtered_data[filtered_data['source'] == selected_source]
+               if selected_location != 'All':
+                filtered_data = filtered_data[filtered_data['location'] == selected_location]
+               if selected_type != 'All':
+                filtered_data = filtered_data[filtered_data['type'] == selected_type]
 
-                            st.subheader("Max Data Metrics")    
-                            if selected_mycotoxin == "ALL":
-                                for mycotoxin, metrics in max_data.items():
-                                    st.write(f"**{mycotoxin}**")
-                                    max_df = pd.DataFrame([metrics])
-                                    st.dataframe(max_df)
-                            else:
-                                if selected_mycotoxin in max_data:
-                                    st.write(f"**{selected_mycotoxin}**")
-                                    max_df = pd.DataFrame([max_data[selected_mycotoxin]])
-                                    st.dataframe(max_df)                                
-                            
-                            st.subheader("Experiments")    
-                        
-                            fig = sp.make_subplots(
-                                rows=len(filtered_commodity_data), cols=1, 
-                                subplot_titles=list(filtered_commodity_data.keys()),
-                                vertical_spacing=0.1
-                            )
+    # Calculate acceptable ranges and yes/no predictions
+               acceptable_ranges = filtered_data['y_true'].apply(calculate_acceptable_range)
+               filtered_data['Acceptable Range AFLA (ppb)'] = acceptable_ranges.apply(lambda x: f"[{x[0]}, {x[1]}]")
+               filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+               yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
+               no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
 
-                            colors = ['#636EFA', '#EF553B', '#00CC96']  # Colors for the bars
+    # Display the filtered data
+               st.subheader("Data Visualization for y_true, y_pred, and mycotoxin")
+               st.dataframe(filtered_data[['mycotoxin', 'y_true', 'y_pred',  'location', 'source', 'type', 'Yes / No',]])
+               st.write(f"Number of Correct Predictions: {yes_count}")
+               st.write(f"Number of Incorrect Predictions: {no_count}")
 
-                            for i, (mycotoxin, experiments) in enumerate(filtered_commodity_data.items(), 1):
-                                x = [exp['name'] for exp in experiments]
-                                r2 = [exp['metrics']['R2'] for exp in experiments]
-                                rmse = [exp['metrics']['RMSE'] for exp in experiments]
-                                mae = [exp['metrics']['MAE'] for exp in experiments]
-                                
-                                hover_text = [
-                                    f"Experiment: {exp['name']}<br>"
-                                    f"R2: {exp['metrics']['R2']:.4f}<br>"
-                                    f"RMSE: {exp['metrics']['RMSE']:.4f}<br>"
-                                    f"MAE: {exp['metrics']['MAE']:.4f}<br>"
-                                    f"Source: {exp['filters']['source']}<br>"
-                                    f"Location: {exp['filters']['location']}<br>"
-                                    f"Type: {exp['filters']['type']}<br>"
-                                    f"Sample Count: {exp['sample_count']}"
-                                    for exp in experiments
-                                ]
-                                
-                                fig.add_trace(go.Bar(x=x, y=r2, name='R2', marker_color=colors[0], text=[f"{val:.4f}" for val in r2], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                                fig.add_trace(go.Bar(x=x, y=rmse, name='RMSE', marker_color=colors[1], text=[f"{val:.4f}" for val in rmse], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                                fig.add_trace(go.Bar(x=x, y=mae, name='MAE', marker_color=colors[2], text=[f"{val:.4f}" for val in mae], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                            
-                            fig.update_layout(
-                                height=400 * len(filtered_commodity_data),
-                                title_text=f"Performance Metrics for {selected_commodity}",
-                                barmode='group',
-                                legend_title_text='Metrics'
-                            )
-                            
-                            fig.update_xaxes(title_text="Experiments", tickangle=45)
-                            fig.update_yaxes(title_text="Metric Value")
-                            
-                            st.plotly_chart(fig, use_container_width=True)
-                            
-                            # Display detailed information in a table
-                            st.subheader(f"Detailed Performance for {selected_commodity}")
-                            
-                            table_data = []
-                            for mycotoxin, experiments in filtered_commodity_data.items():
-                                for exp in experiments:
-                                    table_data.append({
-                                        "Mycotoxin": mycotoxin,
-                                        "Experiment": exp['name'],
-                                        "R2": f"{exp['metrics']['R2']:.4f}",
-                                        "RMSE": f"{exp['metrics']['RMSE']:.4f}",
-                                        "MAE": f"{exp['metrics']['MAE']:.4f}",
-                                        "Source": exp['filters']['source'],
-                                        "Location": exp['filters']['location'],
-                                        "Type": exp['filters']['type'],
-                                        "Sample Count": exp['sample_count']
-                                    })
-                            
-                            df = pd.DataFrame(table_data)
-                            st.dataframe(df)
-                            
-                            # Add download button for CSV
-                            csv = df.to_csv(index=False)
-                            st.download_button(
-                                label="Download data as CSV",
-                                data=csv,
-                                file_name=f"{selected_commodity}_performance_data.csv",
-                                mime="text/csv",
-                            )
-                    else:
-                        st.info("No performance data available")
-                            
+
+
+    # Example: Custom visualization based on your requirements
+    # Add your own custom visualization code here
+
+               if filtered_data.empty:
+                st.info("No data available for the selected filters.")
 
 
             
@@ -593,5 +625,3 @@ else:
                 )
         else:
             st.info("No performance data available")
-
-
