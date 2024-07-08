@@ -33,7 +33,7 @@ To run the Experiment Tracking application, navigate to the `experiment-tracking
 cd experiment-tracking
 streamlit run main.py
 ```
-Link to the application - [Experiment Tracking App](https://experiment-tracking.streamlit.app/)
+Link to the application - [Experiment Tracking App](https://stream-lit-app-asteibmlfzhzz47h3nngtq.streamlit.app/)
 ## Mycotoxin Analysis
 
 ### Usage
@@ -44,3 +44,16 @@ cd mycotoxin-analysis
 streamlit run main.py
 ```
 Link to the application - [Mycotoxin Analysis App](https://mycotoxin-analysis.streamlit.app/)
+
+## How to use :
+ Please add the experiment file or sample file you wish to view for a comprehensive comparison of metrics and in-depth experiment analysis. Ensure the experiment name has not been previously defined to avoid overwriting existing files with the same experiment name.
+
+There are a total of 6 tabs available:
+
+Tab 1: Scatter Plot
+Tab 2: Residual Plot
+Tab 3: Metrics Comparison
+Tab 4: NaN Data Visualization
+Tab 5: Experiment Comparison (Compare with all previous experiments conducted)
+Tab 6: Data Visualization (View incorrect predictions)
+ 
