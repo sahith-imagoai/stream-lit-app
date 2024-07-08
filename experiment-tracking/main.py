@@ -98,7 +98,33 @@ def is_y_pred_in_range(y_true, y_pred):
     elif y_true > 300 and y_pred > 250:
         return 'Yes'
     else:
-        return 'No'    
+        return 'No'  
+def is_y_pred_in_range_don(y_true,y_pred):
+    lower_bound = y_true - 0.2 * y_true
+    upper_bound = y_true + 0.2 * y_true
+    if lower_bound <= y_pred <= upper_bound:
+        return 'Yes'
+    else :
+        return 'No'
+
+
+
+
+def is_y_pred_in_range_fum(y_true,y_pred):
+    lower_bound = y_true - 0.26 * y_true
+    upper_bound = y_true + 0.26 * y_true
+    if lower_bound <= y_pred <= upper_bound:
+        return 'Yes'
+    else :
+        return 'No'
+
+def is_y_pred_in_range_zea(y_true,y_pred):
+    lower_bound = y_true - 0.4 * y_true
+    upper_bound = y_true + 0.4 * y_true
+    if lower_bound <= y_pred <= upper_bound:
+        return 'Yes'
+    else :
+        return 'No'
 def calculate_metrics(y_true, y_pred):
     r2 = r2_score(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
@@ -126,7 +152,50 @@ def save_experiment_data(complete_data, experiment_name):
     complete_data.to_csv(complete_data_file, index=False)
     st.success(f"Complete data saved successfully to {complete_data_file}")
 
-   
+def calculate_ranking_score(filtered_data):
+    y_true = filtered_data['y_true']
+    y_pred = filtered_data['y_pred']
+    
+    # Calculate R2 scores
+    r2 = r2_score(y_true, y_pred)
+    y_true_tcs_non_zero = filtered_data[(filtered_data['source'] == 'TCS') & (filtered_data['y_true'] != 0)]['y_true']
+    y_pred_tcs_non_zero = filtered_data[(filtered_data['source'] == 'TCS') & (filtered_data['y_true'] != 0)]['y_pred']
+    tcs_non_zero_r2 = r2_score(y_true_tcs_non_zero, y_pred_tcs_non_zero)
+    y_true_trm_non_zero = filtered_data[(filtered_data['source'] == 'TRM') & (filtered_data['y_true'] != 0)]['y_true']
+    y_pred_trm_non_zero = filtered_data[(filtered_data['source'] == 'TRM') & (filtered_data['y_true'] != 0)]['y_pred']
+    trm_non_zero_r2 = r2_score(y_true_trm_non_zero, y_pred_trm_non_zero)
+    
+    # Count occurrences where y_true == 0
+    no_count_0 = filtered_data[filtered_data['y_true'] == 0].shape[0]
+    
+    tcs_no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['source'] == 'TCS') & (filtered_data['y_true'] == 0)].shape[0]
+    trm_no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['source'] == 'TRM') & (filtered_data['y_true'] == 0)].shape[0]
+    
+    # Calculate All R2 (assuming it's for all data)
+    all_r2 = r2_score(y_true, y_pred)
+    
+    # Define a composite ranking score (you can adjust weights as needed)
+    if tcs_no_count_0 == 0 : 
+        tcs_no_count_0 = 1
+    else :
+        tcs_no_count_0 = (1/tcs_no_count_0)
+    if trm_no_count_0 == 0:
+        trm_no_count_0 = 1
+    else : 
+        trm_no_count_0 = (1/trm_no_count_0)
+    print(tcs_no_count_0)
+    print(trm_no_count_0)
+    print(trm_no_count_0)
+    print(tcs_no_count_0)
+    print(trm_non_zero_r2)
+    print(tcs_non_zero_r2)
+    ranking_score = ((tcs_no_count_0) * 0.3) + \
+                    ((trm_no_count_0) * 0.25) + \
+                    (tcs_non_zero_r2 * 0.2) + \
+                    (trm_non_zero_r2 * 0.15) + \
+                    (r2 * 0.1)  # Adjust weights based on importance
+    
+    return ranking_score 
     
 def save_metrics_to_json(metrics, file_name, filters, experiment_name, sample_count):
     json_file = "experiments_metrics.json"
@@ -376,7 +445,7 @@ if uploaded_files:
                 locations = sorted(set(combined_data['location']))
                 types = sorted(set(combined_data['type']))
                 sources = sorted(set(combined_data['source']))
-
+           
                 selected_mycotoxin = st.selectbox("Filter by Mycotoxin", ['All'] + mycotoxins)
                 selected_location = st.selectbox("Filter by Location", ['All'] + locations)
                 selected_type = st.selectbox("Filter by Type", ['All'] + types)
@@ -398,12 +467,18 @@ if uploaded_files:
                   mae = mean_absolute_error(y_true, y_pred)
                   rmse = mean_squared_error(y_true, y_pred, squared=False)
                   no_count = 0
-                 
-                  filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+                  if(mycotoxins[0] == 'AFLA'):
+                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+                  elif(mycotoxins[0]=='DON'):
+                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
+                  elif(mycotoxins[0]=='FUM'):
+                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
+                  elif(mycotoxins[0]=='ZEA'):
+                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
                   yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
                   no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
                   no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
-
+                  ranking_score = calculate_ranking_score(filtered_data)
     # Append the metrics to the list
                   data_list.append({
         "Experiment Name": exp_name,
@@ -411,10 +486,12 @@ if uploaded_files:
         "MAE": mae,
         "RMSE": rmse,
         "Incorrect Predictions": no_count,
-        "Incorrect Predictions at 0":no_count_0
+        "Incorrect Predictions at 0":no_count_0,
+        "ranking_score":ranking_score
     })
 
                 final_comparision_metrics = pd.DataFrame(data_list)
+                final_comparision_metrics = final_comparision_metrics.sort_values(by='ranking_score', ascending=False)
                 st.write(final_comparision_metrics)
                 
                 st.header("Experiment Performance Comparison")
@@ -452,8 +529,15 @@ if uploaded_files:
 
     # Calculate acceptable ranges and yes/no predictions
                acceptable_ranges = filtered_data['y_true'].apply(calculate_acceptable_range)
-               filtered_data['Acceptable Range AFLA (ppb)'] = acceptable_ranges.apply(lambda x: f"[{x[0]}, {x[1]}]")
-               filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+               if(mycotoxin_options[0]=='AFLA'):
+                filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+               elif(mycotoxin_options[0]=='DON'):
+                filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
+               elif(mycotoxin_options[0]=='FUM'):
+                filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
+               elif(mycotoxin_options[0]=='ZEA'):
+                filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+
                yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
                no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
 
