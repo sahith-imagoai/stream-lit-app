@@ -454,6 +454,7 @@ if uploaded_files:
                                                location=selected_location if selected_location != 'All' else None,
                                                type=selected_type if selected_type != 'All' else None,
                                                source=selected_source if selected_source != 'All' else None)
+                  df = experiment_data[exp_name]
                   y_true = filtered_data['y_true']
                   y_pred = filtered_data['y_pred']
                   
@@ -463,16 +464,20 @@ if uploaded_files:
                   no_count = 0
                   if(mycotoxins[0] == 'AFLA'):
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+                      df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
                   elif(mycotoxins[0]=='DON'):
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
+                      df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
                   elif(mycotoxins[0]=='FUM'):
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
+                      df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
                   elif(mycotoxins[0]=='ZEA'):
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+                      df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
                   yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
                   no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
                   no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
-                  ranking_score = calculate_ranking_score(filtered_data)
+                  ranking_score = calculate_ranking_score(df)
     # Append the metrics to the list
                   data_list.append({
         "Experiment Name": exp_name,
