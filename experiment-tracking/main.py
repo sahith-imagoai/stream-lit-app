@@ -183,12 +183,7 @@ def calculate_ranking_score(filtered_data):
         trm_no_count_0 = 1
     else : 
         trm_no_count_0 = (1/trm_no_count_0)
-    print(tcs_no_count_0)
-    print(trm_no_count_0)
-    print(trm_no_count_0)
-    print(tcs_no_count_0)
-    print(trm_non_zero_r2)
-    print(tcs_non_zero_r2)
+    
     ranking_score = ((tcs_no_count_0) * 0.3) + \
                     ((trm_no_count_0) * 0.25) + \
                     (tcs_non_zero_r2 * 0.2) + \
@@ -437,8 +432,7 @@ if uploaded_files:
                 combined_data = pd.concat([experiment_data[exp_name] for exp_name in selected_experiments], ignore_index=True)
 
                 first_key = next(iter(experiment_data))
-                print(first_key)
-                print(set(combined_data['mycotoxin']))
+            
                 if(len(set(combined_data['mycotoxin'])) > 1):
                    st.warning("Warning: You have selected different mycotoxins at a time. Please verify.")
                 mycotoxins = sorted(set(combined_data['mycotoxin']))
@@ -454,7 +448,7 @@ if uploaded_files:
                 data_list = []
 
                 for exp_name in selected_experiments:
-                  print(exp_name)
+               
                   filtered_data = filter_experiment_data(experiment_data[exp_name], 
                                                mycotoxin=selected_mycotoxin if selected_mycotoxin != 'All' else None,
                                                location=selected_location if selected_location != 'All' else None,
@@ -557,158 +551,104 @@ if uploaded_files:
 
 
             
-else:                
+else:        
+    
+            
     st.header("Experiment Performance Comparison")
 
-    if os.path.exists(json_file_path):
-        raw_data = load_json_data(json_file_path)
-        if raw_data:
-            data = process_data(raw_data)
-            
+    st.title('Experiment Data Analysis')
+    folder_path = "experiment_results"
+    st.write("Only select the experiments with same mycotoxin value")
+    if not os.path.exists(folder_path):
+        st.warning(f"No experiment data found in {folder_path}")
+        st.stop()
+    experiment_data = load_experiment_data(folder_path)
+    experiment_names = list(experiment_data.keys())
+    selected_experiments = st.multiselect("Select Experiments for Comparison", experiment_names)
+    st.header("Delete Previously done experiment data")
+    delete_experiments = st.checkbox("Select experiments to delete")
+    if delete_experiments:
+      experiments_to_delete = st.multiselect("Select Experiments to Delete", experiment_names)
+    if st.button("Delete Selected Experiments"):
+        for exp_name in experiments_to_delete:
+            file_path = os.path.join(folder_path, f"{exp_name}.csv")
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        st.success("Selected experiments deleted successfully.")
+    if not selected_experiments:
+        st.info("Select one or more experiments to compare")
+        st.stop()
+                
 
-            # Create a dropdown to select the commodity
-            commodities = ['Corn', 'Barley', 'Wheat', 'CGM', 'DDGS']
-            selected_commodity = st.selectbox("Select Commodity", commodities)
-            
-            if selected_commodity in data:
-                commodity_data = data[selected_commodity]
-                mycotoxins = list(commodity_data.keys())
-                
-                # all_sources = list(set(exp['filters']['source'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                # Create filters for location, type, and mycotoxin
-                all_locations = list(set(exp['filters']['location'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                all_types = list(set(exp['filters']['type'] for mycotoxin in mycotoxins for exp in commodity_data[mycotoxin]))
-                all_sources = ['ALL','TRM', 'TCS', 'Others']
+        # Add a separator between experiments
+    st.markdown("---")
 
-                selected_mycotoxin = st.selectbox("Filter by Mycotoxin", mycotoxins)
-                selected_source = st.selectbox("Filter by Source", all_sources)
-                selected_location = st.selectbox("Filter by Location", all_locations)
-                selected_type = st.selectbox("Filter by Type", all_types)
+    combined_data = pd.concat([experiment_data[exp_name] for exp_name in selected_experiments], ignore_index=True)
 
-                # Filter data based on selected location, type, and mycotoxin
-                filtered_commodity_data = {}
-                for mycotoxin, experiments in commodity_data.items():
-                    if selected_mycotoxin == "ALL" or mycotoxin == selected_mycotoxin:
-                        if selected_source == "ALL":
-                            source_filtered_experiments = experiments
-                        else:
-                            source_filtered_experiments = [exp for exp in experiments if exp['filters']['source'] == selected_source]
-                        
-                        if not source_filtered_experiments:
-                            continue  # Skip to next mycotoxin if no data available after source filtering
-    
-                        
-                        filtered_experiments = [
-                            exp for exp in source_filtered_experiments
-                            if (selected_location == "ALL" or exp['filters']['location'] == selected_location) and
-                            (selected_type == "ALL" or exp['filters']['type'] == selected_type)
-                        ]
-                        
-                        if filtered_experiments:
-                            filtered_commodity_data[mycotoxin] = filtered_experiments
-                if not filtered_commodity_data:
-                    st.info("No performance data available")
-                    st.stop()
-                # Display max_data in a matrix format
-                max_data = {}
-                for mycotoxin, experiments in filtered_commodity_data.items():
-                    if experiments:  # Ensure there are experiments for this mycotoxin
-                        max_data[mycotoxin] = {
-                            'R2': max(exp['metrics']['R2'] for exp in experiments),
-                            'RMSE': min(exp['metrics']['RMSE'] for exp in experiments),
-                            'MAE': min(exp['metrics']['MAE'] for exp in experiments)
-                        }
-                    else:
-                        max_data[mycotoxin] = {
-                        'R2': None,
-                        'RMSE': None,
-                        'MAE': None
-                        }
+    first_key = next(iter(experiment_data))
+   
+    if(len(set(combined_data['mycotoxin'])) > 1):
+        st.warning("Warning: You have selected different mycotoxins at a time. Please verify.")
+    mycotoxins = sorted(set(combined_data['mycotoxin']))
+    locations = sorted(set(combined_data['location']))
+    types = sorted(set(combined_data['type']))
+    sources = sorted(set(combined_data['source']))
+           
+    selected_mycotoxin = st.selectbox("Filter by Mycotoxin", ['All'] + mycotoxins)
+    selected_location = st.selectbox("Filter by Location", ['All'] + locations)
+    selected_type = st.selectbox("Filter by Type", ['All'] + types)
+    selected_source = st.selectbox("Filter by Source", ['All'] + sources)
+    filtered_experiment_data = {}
+    data_list = []
 
-                st.subheader("Max Data Metrics")    
-                if selected_mycotoxin == "ALL":
-                    for mycotoxin, metrics in max_data.items():
-                        st.write(f"**{mycotoxin}**")
-                        max_df = pd.DataFrame([metrics])
-                        st.dataframe(max_df)
-                else:
-                    if selected_mycotoxin in max_data:
-                        st.write(f"**{selected_mycotoxin}**")
-                        max_df = pd.DataFrame([max_data[selected_mycotoxin]])
-                        st.dataframe(max_df)                                
-                
-                st.subheader("Experiments")    
-            
-                fig = sp.make_subplots(
-                    rows=len(filtered_commodity_data), cols=1, 
-                    subplot_titles=list(filtered_commodity_data.keys()),
-                    vertical_spacing=0.1
-                )
+    for exp_name in selected_experiments:
 
-                colors = ['#636EFA', '#EF553B', '#00CC96']  # Colors for the bars
+        filtered_data = filter_experiment_data(experiment_data[exp_name], 
+                                               mycotoxin=selected_mycotoxin if selected_mycotoxin != 'All' else None,
+                                               location=selected_location if selected_location != 'All' else None,
+                                               type=selected_type if selected_type != 'All' else None,
+                                               source=selected_source if selected_source != 'All' else None)
+        y_true = filtered_data['y_true']
+        y_pred = filtered_data['y_pred']
+                  
+        r2 = r2_score(y_true, y_pred)
+        mae = mean_absolute_error(y_true, y_pred)
+        rmse = mean_squared_error(y_true, y_pred, squared=False)
+        no_count = 0
+        if(mycotoxins[0] == 'AFLA'):
+            filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+        elif(mycotoxins[0]=='DON'):
+            filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
+        elif(mycotoxins[0]=='FUM'):
+            filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
+        elif(mycotoxins[0]=='ZEA'):
+            filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+        yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
+        no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
+        no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
+        ranking_score = calculate_ranking_score(filtered_data)
+    # Append the metrics to the list
+        data_list.append({
+        "Experiment Name": exp_name,
+        "R2": r2,
+        "MAE": mae,
+        "RMSE": rmse,
+        "Incorrect Predictions": no_count,
+        "Incorrect Predictions at 0":no_count_0,
+        "ranking_score":ranking_score
+    })
 
-                for i, (mycotoxin, experiments) in enumerate(filtered_commodity_data.items(), 1):
-                    x = [exp['name'] for exp in experiments]
-                    r2 = [exp['metrics']['R2'] for exp in experiments]
-                    rmse = [exp['metrics']['RMSE'] for exp in experiments]
-                    mae = [exp['metrics']['MAE'] for exp in experiments]
-                    
-                    hover_text = [
-                        f"Experiment: {exp['name']}<br>"
-                        f"R2: {exp['metrics']['R2']:.4f}<br>"
-                        f"RMSE: {exp['metrics']['RMSE']:.4f}<br>"
-                        f"MAE: {exp['metrics']['MAE']:.4f}<br>"
-                        f"Source: {exp['filters']['source']}<br>"
-                        f"Location: {exp['filters']['location']}<br>"
-                        f"Type: {exp['filters']['type']}<br>"
-                        f"Sample Count: {exp['sample_count']}"
-                        for exp in experiments
-                    ]
-                    
-                    fig.add_trace(go.Bar(x=x, y=r2, name='R2', marker_color=colors[0], text=[f"{val:.4f}" for val in r2], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                    fig.add_trace(go.Bar(x=x, y=rmse, name='RMSE', marker_color=colors[1], text=[f"{val:.4f}" for val in rmse], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                    fig.add_trace(go.Bar(x=x, y=mae, name='MAE', marker_color=colors[2], text=[f"{val:.4f}" for val in mae], textposition='auto', hovertext=hover_text, hoverinfo='text'), row=i, col=1)
-                
-                fig.update_layout(
-                    height=400 * len(filtered_commodity_data),
-                    title_text=f"Performance Metrics for {selected_commodity}",
-                    barmode='group',
-                    legend_title_text='Metrics'
-                )
-                
-                fig.update_xaxes(title_text="Experiments", tickangle=45)
-                fig.update_yaxes(title_text="Metric Value")
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Display detailed information in a table
-                st.subheader(f"Detailed Performance for {selected_commodity}")
-                
-                table_data = []
-                for mycotoxin, experiments in filtered_commodity_data.items():
-                    for exp in experiments:
-                        table_data.append({
-                            "Mycotoxin": mycotoxin,
-                            "Experiment": exp['name'],
-                            "R2": f"{exp['metrics']['R2']:.4f}",
-                            "RMSE": f"{exp['metrics']['RMSE']:.4f}",
-                            "MAE": f"{exp['metrics']['MAE']:.4f}",
-                            "Source": exp['filters']['source'],
-                            "Location": exp['filters']['location'],
-                            "Type": exp['filters']['type'],
-                            "Sample Count": exp['sample_count']
-                        })
-                
-                df = pd.DataFrame(table_data)
-                st.dataframe(df)
-                
-                # Add download button for CSV
-                csv = df.to_csv(index=False)
-                st.download_button(
+    final_comparision_metrics = pd.DataFrame(data_list)
+    final_comparision_metrics = final_comparision_metrics.sort_values(by='ranking_score', ascending=False)
+    st.write(final_comparision_metrics)
+    csv = final_comparision_metrics.to_csv(index=False)
+    st.download_button(
                     label="Download data as CSV",
                     data=csv,
-                    file_name=f"{selected_commodity}_performance_data.csv",
-                    mime="text/csv",
-                )
-        else:
-            st.info("No performance data available")
+                    file_name=f"experiments_performance_data.csv",
+                    mime="text/csv")
+    
+    
+
+                
+        
