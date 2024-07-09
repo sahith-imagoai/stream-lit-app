@@ -446,7 +446,7 @@ if uploaded_files:
                 selected_source = st.selectbox("Filter by Source", ['All'] + sources)
                 filtered_experiment_data = {}
                 data_list = []
-
+                rank_data_list = []
                 for exp_name in selected_experiments:
                
                   filtered_data = filter_experiment_data(experiment_data[exp_name], 
@@ -462,6 +462,7 @@ if uploaded_files:
                   mae = mean_absolute_error(y_true, y_pred)
                   rmse = mean_squared_error(y_true, y_pred, squared=False)
                   no_count = 0
+                  
                   if(mycotoxins[0] == 'AFLA'):
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
                       df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
@@ -479,6 +480,10 @@ if uploaded_files:
                   no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
                   ranking_score = calculate_ranking_score(df)
     # Append the metrics to the list
+                  rank_data_list.append({
+                      "Experiment Name": exp_name,
+                      "Ranking Score":ranking_score
+                  })
                   data_list.append({
         "Experiment Name": exp_name,
         "R2": r2,
@@ -486,13 +491,15 @@ if uploaded_files:
         "RMSE": rmse,
         "Incorrect Predictions": no_count,
         "Incorrect Predictions at 0":no_count_0,
-        "ranking_score":ranking_score
+        
     })
 
                 final_comparision_metrics = pd.DataFrame(data_list)
-                final_comparision_metrics = final_comparision_metrics.sort_values(by='ranking_score', ascending=False)
-                st.write(final_comparision_metrics)
                 
+                rank_data_list = pd.DataFrame(rank_data_list)
+                rank_data_list = rank_data_list.sort_values(by='ranking_score', ascending=False)
+                st.write(final_comparision_metrics)
+                st.write(rank_data_list)
                 st.header("Experiment Performance Comparison")
                 if os.path.exists(json_file_path):
                    raw_data = load_json_data(json_file_path)
@@ -605,9 +612,9 @@ else:
     selected_source = st.selectbox("Filter by Source", ['All'] + sources)
     filtered_experiment_data = {}
     data_list = []
-
+    rank_data_list = []
     for exp_name in selected_experiments:
-
+        df = experiment_data[exp_name]
         filtered_data = filter_experiment_data(experiment_data[exp_name], 
                                                mycotoxin=selected_mycotoxin if selected_mycotoxin != 'All' else None,
                                                location=selected_location if selected_location != 'All' else None,
@@ -622,17 +629,26 @@ else:
         no_count = 0
         if(mycotoxins[0] == 'AFLA'):
             filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
+            df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range(row['y_true'], row['y_pred']), axis=1)
         elif(mycotoxins[0]=='DON'):
             filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
+            df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_don(row['y_true'], row['y_pred']), axis=1)
         elif(mycotoxins[0]=='FUM'):
             filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
+            df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
         elif(mycotoxins[0]=='ZEA'):
             filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+            df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
         yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
         no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
         no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
-        ranking_score = calculate_ranking_score(filtered_data)
+        ranking_score = calculate_ranking_score(df)
+        
     # Append the metrics to the list
+        rank_data_list.append({
+            "Experiment Name": exp_name,
+            "ranking_score":ranking_score
+        })
         data_list.append({
         "Experiment Name": exp_name,
         "R2": r2,
@@ -640,12 +656,14 @@ else:
         "RMSE": rmse,
         "Incorrect Predictions": no_count,
         "Incorrect Predictions at 0":no_count_0,
-        "ranking_score":ranking_score
+        
     })
 
     final_comparision_metrics = pd.DataFrame(data_list)
-    final_comparision_metrics = final_comparision_metrics.sort_values(by='ranking_score', ascending=False)
+    rank_data_list = pd.DataFrame(rank_data_list)
+    rank_data_list = rank_data_list.sort_values(by='ranking_score', ascending=False)
     st.write(final_comparision_metrics)
+    st.write(rank_data_list)
     csv = final_comparision_metrics.to_csv(index=False)
     st.download_button(
                     label="Download data as CSV",
