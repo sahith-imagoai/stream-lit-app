@@ -482,7 +482,7 @@ if uploaded_files:
     # Append the metrics to the list
                   rank_data_list.append({
                       "Experiment Name": exp_name,
-                      "Ranking Score":ranking_score
+                      "ranking_score":ranking_score
                   })
                   data_list.append({
         "Experiment Name": exp_name,
