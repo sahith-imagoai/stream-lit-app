@@ -99,6 +99,7 @@ def is_y_pred_in_range(y_true, y_pred):
         return 'Yes'
     else:
         return 'No'  
+
 def is_y_pred_in_range_don(y_true,y_pred):
     lower_bound = y_true - 0.2 * y_true
     upper_bound = y_true + 0.2 * y_true
@@ -117,7 +118,36 @@ def is_y_pred_in_range_fum(y_true,y_pred):
         return 'Yes'
     else :
         return 'No'
+def check_acceptable_range_zea(y_true, y_pred):
+    # Define the specifications based on the given table
+    # Assuming target_concentration is any value and not fixed
+    if y_true<=50 :
+        if y_pred <=50 :
+         return 'Yes'
+        return 'No'
+    elif 50<y_true <= 100 :
+        lower_bound = y_true-50
+        upper_bound = y_true+50
+    elif 100<y_true <= 250:
+        lower_bound = y_true-100
+        upper_bound = y_true+100
+    elif 250<y_true<400:
+        lower_bound = y_true-200
+        upper_bound = y_true+200
+    elif 400< y_true <= 1000 :
+        lower_bound = y_true-400
+        upper_bound = y_true+400
+    else :
+        lower_bound = y_true-400
+        upper_bound = y_true+400
 
+
+
+    # Check if y_pred falls within the acceptable range
+    if lower_bound <= y_pred <= upper_bound:
+        return 'Yes'
+    else:
+        return 'No'
 def is_y_pred_in_range_zea(y_true,y_pred):
     lower_bound = y_true - 0.4 * y_true
     upper_bound = y_true + 0.4 * y_true
@@ -473,8 +503,8 @@ if uploaded_files:
                       filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
                       df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
                   elif(mycotoxins[0]=='ZEA'):
-                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
-                      df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+                      filtered_data['Yes / No'] = filtered_data.apply(lambda row: check_acceptable_range_zea(row['y_true'], row['y_pred']), axis=1)
+                      df['Yes / No'] = df.apply(lambda row: check_acceptable_range_zea(row['y_true'], row['y_pred']), axis=1)
                   yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
                   no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
                   no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
@@ -542,7 +572,7 @@ if uploaded_files:
                elif(mycotoxin_options[0]=='FUM'):
                 filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
                elif(mycotoxin_options[0]=='ZEA'):
-                filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+                filtered_data['Yes / No'] = filtered_data.apply(lambda row: check_acceptable_range_zea(row['y_true'], row['y_pred']), axis=1)
 
                yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
                no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
@@ -637,8 +667,8 @@ else:
             filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
             df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_fum(row['y_true'], row['y_pred']), axis=1)
         elif(mycotoxins[0]=='ZEA'):
-            filtered_data['Yes / No'] = filtered_data.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
-            df['Yes / No'] = df.apply(lambda row: is_y_pred_in_range_zea(row['y_true'], row['y_pred']), axis=1)
+            filtered_data['Yes / No'] = filtered_data.apply(lambda row: check_acceptable_range_zea(row['y_true'], row['y_pred']), axis=1)
+            df['Yes / No'] = df.apply(lambda row: check_acceptable_range_zea(row['y_true'], row['y_pred']), axis=1)
         yes_count = filtered_data[filtered_data['Yes / No'] == 'Yes'].shape[0]
         no_count = filtered_data[filtered_data['Yes / No'] == 'No'].shape[0]
         no_count_0 = filtered_data[(filtered_data['Yes / No'] == 'No') & (filtered_data['y_true'] == 0)].shape[0]
